@@ -30,6 +30,7 @@ public interface LRAManagement {
      * Join an existing LRA.
      *
      * @param participant an instance of a {@link LRAParticipant} that will be notified when the target LRA ends
+     * @param deserializer an object that knows how to deserialize a participant
      * @param lraId the LRA that the join request pertains to
      * @param timeLimit the time for which the participant should remain valid. When this time limit is exceeded
      *                  the participant may longer be able to fulfil the protocol guarantees.
@@ -40,7 +41,8 @@ public interface LRAManagement {
      * @throws JoinLRAException if the request to the coordinator failed. {@link JoinLRAException#getCause()}
      * and/or {@link JoinLRAException#getStatusCode()} may provide a more specific reason
      */
-    String joinLRA(LRAParticipant participant, URL lraId, Long timeLimit, TimeUnit unit) throws JoinLRAException;
+    String joinLRA(LRAParticipant participant, LRAParticipantDeserializer deserializer,
+                   URL lraId, Long timeLimit, TimeUnit unit) throws JoinLRAException;
 
     /**
      * Join an existing LRA. In contrast to the other form of registration this method does not indicate a time limit
@@ -48,6 +50,7 @@ public interface LRAManagement {
      * or unsuccessfully (ie it will never be timed out externally).
      *
      * @param participant an instance of a {@link LRAParticipant} that will be notified when the target LRA ends
+     * @param deserializer an object that knows how to deserialize a participant
      * @param lraId the LRA that the join request pertains to
      *
      * @return a recovery URL for this enlistment
@@ -55,7 +58,7 @@ public interface LRAManagement {
      * @throws JoinLRAException if the request to the coordinator failed. {@link JoinLRAException#getCause()}
      * and/or {@link JoinLRAException#getStatusCode()} may provide a more specific reason
      */
-    String joinLRA(LRAParticipant participant, URL lraId) throws JoinLRAException;
+    String joinLRA(LRAParticipant participant, LRAParticipantDeserializer deserializer, URL lraId) throws JoinLRAException;
 
     /**
      * Register an object for recreating participants during recovery. Use this mechanism after a JVM that hosted

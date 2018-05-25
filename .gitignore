@@ -1,0 +1,7 @@
+target/
+
+# Eclipse
+.project
+.settings/
+.checkstyle
+.classpath

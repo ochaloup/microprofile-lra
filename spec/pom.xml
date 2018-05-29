@@ -20,7 +20,7 @@
         <!-- This is just for now and will not work if the API has a separate release cycle than the rest. -->
         <groupId>io.narayana.microprofile.lra</groupId>
         <artifactId>microprofile-lra-parent</artifactId>
-        <version>0.0.1.Final-SNAPSHOT</version>
+        <version>0.0.1.Final</version>
     </parent>
 
     <artifactId>microprofile-lra-spec</artifactId>

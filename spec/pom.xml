@@ -18,12 +18,11 @@
 
     <parent>
         <!-- This is just for now and will not work if the API has a separate release cycle than the rest. -->
-        <groupId>org.eclipse.microprofile.lra</groupId>
+        <groupId>io.narayana.microprofile.lra</groupId>
         <artifactId>microprofile-lra-parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.0.1.Final-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.eclipse.microprofile.lra</groupId>
     <artifactId>microprofile-lra-spec</artifactId>
     <packaging>pom</packaging>
     <name>MicroProfile LRA Specification</name>

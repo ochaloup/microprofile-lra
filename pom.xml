@@ -20,7 +20,7 @@
     <groupId>io.narayana.microprofile.lra</groupId>
     <artifactId>microprofile-lra-parent</artifactId>
     <name>MicroProfile Long Running Actions</name>
-    <version>0.0.1.Final</version>
+    <version>0.0.2.Final-SNAPSHOT</version>
     <description>Eclipse MicroProfile LRA Feature - Parent POM</description>
     <packaging>pom</packaging>
 

@@ -20,7 +20,7 @@
         <!-- This is just for now and will not work if the API has a separate release cycle than the rest. -->
         <groupId>io.narayana.microprofile.lra</groupId>
         <artifactId>microprofile-lra-parent</artifactId>
-        <version>0.0.1.Final-SNAPSHOT</version>
+        <version>0.0.1.Final</version>
     </parent>
 
     <artifactId>microprofile-lra-spec</artifactId>
@@ -91,8 +91,40 @@
                     </attributes>
                 </configuration>
             </plugin>
+
+      <plugin>
+        <inherited>false</inherited>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+      </plugin>
+
+
+
         </plugins>
 </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-install-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default-install</id>
+                <phase>install</phase>
+              </execution>
+            </executions>
+            <inherited>false</inherited>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+
     
 
 </project>

@@ -19,41 +19,40 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.lra.client.GenericLRAException;
-import org.eclipse.microprofile.lra.client.LRAClient;
-import org.eclipse.microprofile.lra.client.LRAInfo;
-import org.eclipse.microprofile.lra.tck.participant.api.StandardController;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACTIVITIES_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACCEPT_WORK;
+
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.IntStream;
 
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_COORDINATOR_HOST_KEY;
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_COORDINATOR_PORT_KEY;
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_RECOVERY_PATH_KEY;
-import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACCEPT_WORK;
-import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACTIVITIES_PATH;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.lra.client.GenericLRAException;
+import org.eclipse.microprofile.lra.client.LRAClient;
+import org.eclipse.microprofile.lra.client.LRAInfo;
+import org.eclipse.microprofile.lra.tck.participant.api.StandardController;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.EmptyAsset;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(Arquillian.class)
 public class TckTests {
     private final Long LRA_TIMEOUT_MILLIS = 50000L;
 
@@ -70,7 +69,9 @@ public class TckTests {
     private static final String PASSED_TEXT = "passed";
     private static final String WORK_TEXT = "work";
 
-    private static LRAClient lraClient;
+    @Inject
+    private LRAClient lraClient;
+
     private static Client msClient;
     private static Client rcClient;
 
@@ -83,14 +84,17 @@ public class TckTests {
         complete, compensate, mixed
     }
 
-    @BeforeClass
-    public static void beforeClass(LRAClient lraClient) {
-        initTck(lraClient);
+    @Deployment
+    public static WebArchive deploy() {
+        return ShrinkWrap
+                .create(WebArchive.class, "lra-tck.war")
+                .addPackages(true, "org.eclipse.microprofile.lra.tck")
+                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }
-
-    private static void initTck(LRAClient lraClient) {
-        TckTests.lraClient = lraClient;
-
+    
+/*
+    @BeforeClass
+    public static void initTck() {
         try {
             if (Boolean.valueOf(System.getProperty("enablePause", "true"))) {
                 System.out.println("Getting ready to connect - expecting swarm lra coordinator is already up...");
@@ -114,15 +118,14 @@ public class TckTests {
             throw new RuntimeException(e);
         }
     }
-
+*//*
     @AfterClass
     public static void afterClass() {
         oldLRAs.clear();
-        lraClient.close();
         msClient.close();
         rcClient.close();
     }
-
+*//*
     @Before
     public void before() {
         try {
@@ -132,7 +135,7 @@ public class TckTests {
             throw new RuntimeException(e);
         }
     }
-
+*/
     @After
     public void after() {
         List<LRAInfo> activeLRAs = lraClient.getActiveLRAs();
@@ -475,7 +478,8 @@ public class TckTests {
     }
 
     @Test
-    private String timeLimit() {
+    public void timeLimit() {
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>> " + lraClient);
         int[] cnt1 = {completedCount(true), completedCount(false)};
         Response response = null;
 
@@ -509,8 +513,6 @@ public class TckTests {
                 response.close();
             }
         }
-
-        return PASSED_TEXT;
     }
 
     /*

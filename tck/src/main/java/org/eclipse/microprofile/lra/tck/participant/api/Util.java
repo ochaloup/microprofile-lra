@@ -31,9 +31,13 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.Socket;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -140,6 +144,47 @@ public class Util {
         }
 
         return false;
+    }
+
+    /**
+     * Adjusting the value by factor. It means it multiplies the value with factor
+     * and returns the rounded (to up) number.
+     */
+    public static int adjust(int value, double factor) {
+        if(value < 0){
+           throw new IllegalArgumentException("value to adjust can't be negative");
+        }
+        return (int) Math.ceil(value * factor);
+     }
+
+    /**
+     * Checking if the port is available for creating the socket.
+     * If the port is occupied the socket is failed to be created
+     * and the method reports the port is not available.
+     */
+    public static boolean isPortAvailable(final String host, final int port) {
+        Socket testSocket = null;
+        try {
+            testSocket = new Socket(host, port);
+            return false;
+        } catch (UnknownHostException uhe) {
+            throw new IllegalStateException(String.format("Cannot determine the endpoint to test for availability for %s:%d", host, port), uhe);
+        } catch (IOException ioe) {
+            LOGGER.log(Level.FINEST, String.format("Exception got on port (%s:%d) availability testing which probably means the port is occupied.",
+                host, port), ioe);
+            return true;
+        } finally {
+            if (testSocket != null) {
+                try {
+                    testSocket.close();
+                    while(!testSocket.isClosed()) {
+                        Thread.yield();
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.FINE, String.format("Can't close endpoint %s:%d used for port availability testing", host, port), e);
+                }
+            }
+        }
     }
 
     private static int checkMethod(Map<String, String> paths,

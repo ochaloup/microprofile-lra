@@ -152,10 +152,17 @@ public class Util {
      */
     public static int adjust(int value, double factor) {
         if(value < 0){
-           throw new IllegalArgumentException("value to adjust can't be negative");
+            throw new IllegalArgumentException("value to adjust can't be negative");
         }
         return (int) Math.ceil(value * factor);
-     }
+    }
+    
+    public static long adjust(long value, double factor) {
+        if(value < 0){
+            throw new IllegalArgumentException("value to adjust can't be negative");
+        }
+        return (long) Math.ceil(value * factor);
+    }
 
     /**
      * Checking if the port is available for creating the socket.

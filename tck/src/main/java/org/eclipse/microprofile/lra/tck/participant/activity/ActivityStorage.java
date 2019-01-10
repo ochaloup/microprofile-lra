@@ -17,25 +17,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package org.eclipse.microprofile.lra.tck.participant.service;
+package org.eclipse.microprofile.lra.tck.participant.activity;
 
-import org.eclipse.microprofile.lra.tck.participant.model.Activity;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.core.UriInfo;
+
+/**
+ * Storing activities processed by controllers during TCK suite run.
+ */
 @ApplicationScoped
-public class ActivityService {
+public class ActivityStorage {
     private Map<String, Activity> activities = new HashMap<>();
 
-    public Activity getActivity(String txId) throws NotFoundException {
-        if (!activities.containsKey(txId))
-            throw new NotFoundException(Response.status(404).entity("Invalid activity id: " + txId).build());
+    public Activity getActivityAndAssertExistence(String txId, UriInfo jaxrsContext) {
+        if(!activities.containsKey(txId)) {
+            throw new IllegalStateException(
+                String.format("Activity store does not contain LRA id '%s' while it was invoked method at " + jaxrsContext.getPath()));
+        }
 
         return activities.get(txId);
     }
@@ -44,8 +47,8 @@ public class ActivityService {
         return new ArrayList<>(activities.values());
     }
 
-    public void add(Activity activity) {
-        activities.putIfAbsent(activity.getId(), activity);
+    public Activity add(Activity activity) {
+        return activities.putIfAbsent(activity.getLraId(), activity);
     }
 
     public void remove(String id) {

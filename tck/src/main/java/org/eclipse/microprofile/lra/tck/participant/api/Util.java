@@ -149,6 +149,10 @@ public class Util {
     /**
      * Adjusting the value by factor. It means it multiplies the value with factor
      * and returns the rounded (to up) number.
+     *
+     * @param value  value to be adjusted
+     * @param factor  factor for adjusting value
+     * @return  adjusted value by factor
      */
     public static int adjust(int value, double factor) {
         if(value < 0){
@@ -168,6 +172,10 @@ public class Util {
      * Checking if the port is available for creating the socket.
      * If the port is occupied the socket is failed to be created
      * and the method reports the port is not available.
+     *
+     * @param host  host to check port availability at
+     * @param port  port to check availability for
+     * @return true if port is available (free to use), otherwise false
      */
     public static boolean isPortAvailable(final String host, final int port) {
         Socket testSocket = null;

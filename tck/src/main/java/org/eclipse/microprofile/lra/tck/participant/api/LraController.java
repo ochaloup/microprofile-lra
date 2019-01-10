@@ -60,7 +60,6 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -80,7 +79,7 @@ public class LraController {
 
     static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
 
-    private static final String MISSING_LRA_DATA = "Missing lra data";
+    private static final String MISSING_LRA_DATA = "Missing LRA data";
 
     @Inject
     private LRAClient lraClient;
@@ -128,6 +127,7 @@ public class LraController {
     /**
      * Test that participants can leave an LRA using the {@link LRAClient} programmatic API
      * @param lraUrl the id of the LRA
+     * @param recoveryUrl header param defines recovery url
      * @return the url of the LRA if it was successfully removed
      * @throws NotFoundException if the activity was not found
      * @throws MalformedURLException if the LRA is malformed
@@ -264,11 +264,7 @@ public class LraController {
 
         Activity activity = storeActivity(lraId, recoveryId);
 
-        if (activity == null) {
-            return Response.status(Response.Status.EXPECTATION_FAILED).entity(MISSING_LRA_DATA).build();
-        }
-
-        activity.setAcceptedCount(1); // tests that it is possible to asynchronously complete
+        activity.setAcceptedCount(1); // later tests that it is possible to asynchronously complete
         return Response.ok(lraId).build();
     }
 
@@ -361,11 +357,7 @@ public class LraController {
                                    @HeaderParam(LRA_HTTP_HEADER) String nestedLRAId) {
         assertHeaderPresent(nestedLRAId);
 
-        Activity activity = storeActivity(nestedLRAId, recoveryId);
-
-        if (activity == null) {
-            return Response.status(Response.Status.EXPECTATION_FAILED).entity(MISSING_LRA_DATA).build();
-        }
+        storeActivity(nestedLRAId, recoveryId);
 
         return Response.ok(nestedLRAId).build();
     }
@@ -379,11 +371,7 @@ public class LraController {
             @QueryParam("nestedCnt") @DefaultValue("1") Integer nestedCnt) {
         assertHeaderPresent(nestedLRAId);
 
-        Activity activity = storeActivity(nestedLRAId, recoveryId);
-
-        if (activity == null) {
-            return Response.status(Response.Status.EXPECTATION_FAILED).entity(MISSING_LRA_DATA).build();
-        }
+        storeActivity(nestedLRAId, recoveryId);
 
         URL lraURL;
 
@@ -472,7 +460,7 @@ public class LraController {
         try {
             Thread.sleep(300); // sleep for longer than specified in the timeLimit annotation attribute
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.FINE, "Interrupted becaused time limit elapsed", e);
         }
         return Response.status(Response.Status.OK).entity(Entity.text("Simulate buisiness logic timeoout")).build();
     }
@@ -496,7 +484,7 @@ public class LraController {
             // sleep for 200000 micro seconds (should be longer than specified in the timeLimit annotation attribute)
             Thread.sleep(200);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.FINE, "Interrupted because the revewed time limit elapsed", e);
         }
         return Response.status(Response.Status.OK).entity(Entity.text("Simulate buisiness logic timeoout")).build();
     }
@@ -512,14 +500,14 @@ public class LraController {
      * "URL"/cannot-compensate
      * "URL"/cannot-complete
      *
-     * @param LRAId the id of the LRA
+     * @param lraId the id of the LRA
      * @return the final status of the activity
      * @throws NotFoundException if the activity does not exist
      */
     @PUT
     @Path("/{LRAId}/compensate")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response compensate(@PathParam("LRAId")String lraId) throws NotFoundException {
+    public Response compensate(@PathParam("LRAId") String lraId) throws NotFoundException {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         activity.setStatus(CompensatorStatus.Compensated);
@@ -538,18 +526,18 @@ public class LraController {
      * "URL"/cannot-compensate
      * "URL"/cannot-complete
      *
-     * @param LRAId the id of the LRA
+     * @param lraId the id of the LRA
      * @return the final status of the activity
      * @throws NotFoundException if the activity does not exist
      */
     @PUT
     @Path("/{LRAId}/complete")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response complete(@PathParam("LRAId")String LRAId) throws NotFoundException {
-        Activity activity = activityStore.getActivityAndAssertExistence(LRAId, context);
+    public Response complete(@PathParam("LRAId") String lraId) throws NotFoundException {
+        Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         activity.setStatus(CompensatorStatus.Completed);
-        activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), LRAId));
+        activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), lraId));
 
         return Response.ok(activity.getStatusUrl()).build();
     }
@@ -565,7 +553,7 @@ public class LraController {
     @GET
     @Path("/{LRAId}/completed")
     @Produces(MediaType.APPLICATION_JSON)
-    public String completedStatus(@PathParam("LRAId") String lId) {
+    public String completedStatus(@PathParam("LRAId") String lraId) {
         return CompensatorStatus.Completed.name();
     }
 
@@ -602,7 +590,6 @@ public class LraController {
                     String.format("%s: missing '%s' header", context.getPath(), LRA_HTTP_HEADER));
         }
     }
-
 
     private void assertNotHeaderPresent(String lraId) {
         if (lraId != null) {

@@ -37,11 +37,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
+import org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource;
+import static org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource.LRA_TIMEOUT;
 
 /**
  * Valid participant resource containing async non-JAX-RS participant methods with 
@@ -54,6 +58,8 @@ public class ValidLRACSParticipant {
     public static final String ROOT_PATH = "valid-cs-participant1";
     public static final String ENLIST_WITH_COMPLETE = "enlist-complete";
     public static final String ENLIST_WITH_COMPENSATE = "enlist-compensate";
+    public static final String ENLIST_WITH_LONG_LATENCY = "latency";
+    private static final Logger LOGGER = Logger.getLogger(ValidLRACSParticipant.class.getName());
     
     private int recoveryPasses;
 
@@ -116,6 +122,21 @@ public class ValidLRACSParticipant {
     @Path(ACCEPT_PATH)
     public Response getAcceptLRA() {
         return Response.ok(this.recoveryPasses).build();
+    }
+    
+    @PUT
+    @Path(ENLIST_WITH_LONG_LATENCY)
+    @LRA(value = LRA.Type.MANDATORY, end = false, timeLimit = 10 * LRA_TIMEOUT, timeUnit = ChronoUnit.MILLIS)
+    public Response enlistWithLongLatency(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        LOGGER.info("call of enlistWithLongLatency");
+        try {
+            Thread.sleep(LRA_TIMEOUT * 8);
+            return Response.ok(lraId)
+                    .entity(String.valueOf(lraMetricService.getMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName())))
+                    .build();
+        } catch (InterruptedException ex) {
+            return Response.ok().build();
+        }
     }
 
 }

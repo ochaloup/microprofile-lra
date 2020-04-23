@@ -47,11 +47,11 @@ import java.util.logging.Logger;
 
 /**
  * Tests for the recovery of failed LRA services. Test that LRA functions properly even in case of service failures.
- * 
+ *
  * As this test is not running a managed Arquillian deployment, CDI is not working inside of this class. This is
  * why the test execution is moved into {@link RecoveryResource} in two phases (see {@link RecoveryResource#PHASE_1} and
  * {@link RecoveryResource#PHASE_2}) which also verify the results and pass the results in HTTP response.
- * 
+ *
  * Note that this test relies on Arquillian to supply the deployment URL via the {@link ArquillianResource} injection.
  */
 @RunWith(Arquillian.class)
@@ -62,27 +62,27 @@ public class TckRecoveryTests {
 
     @ArquillianResource
     private Deployer deployer;
-    
+
     @ArquillianResource
     private URL deploymentURL;
 
     private LRARecoveryService lraRecoveryService;
-    
+
     private Client deploymentClient;
     private WebTarget deploymentTarget;
 
     @Rule
     public TestName testName = new TestName();
-        
+
     @Before
     public void before() throws URISyntaxException {
         LOGGER.info("Running test: " + testName.getMethodName());
-        
+
         deploymentClient = ClientBuilder.newClient();
         deploymentTarget = deploymentClient.target(deploymentURL.toURI());
         lraRecoveryService = LRATestService.loadService(LRARecoveryService.class);
     }
-    
+
     @After
     public void after() {
         deploymentClient.close();
@@ -97,7 +97,7 @@ public class TckRecoveryTests {
      * This test verifies that if the microservice application fails after
      * it enlists with a LRA and then it is restarted again the Compensate
      * callbacks are still received correctly.
-     * 
+     *
      * Scenario:
      * - start a new container with a single LRA resource
      * - start a new LRA and enlist LRA resource
@@ -109,11 +109,11 @@ public class TckRecoveryTests {
     public void testCancelWhenParticipantIsRestarted() {
         // deploy the test service
         deployer.deploy(DEPLOYMENT_NAME);
-        
+
         // invoke phase 1 inside the container (start new LRA and enlist resource)
         Response response1 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_1).request().get();
-        
+                .path(RecoveryResource.PHASE_1).request().get();
+
         Assert.assertEquals(200, response1.getStatus());
         URI lra = URI.create(response1.readEntity(String.class));
 
@@ -126,13 +126,13 @@ public class TckRecoveryTests {
         // invoke phase 2 inside the container (cancel the LRA and verify that the
         // @Compensate method was called on the enlisted resource)
         Response response2 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_2)
-            .request()
+                .path(RecoveryResource.PHASE_2)
+                .request()
                 .header(RecoveryResource.LRA_HEADER, lra)
                 .get();
-        
+
         Assert.assertEquals(response2.readEntity(String.class), 200, response2.getStatus());
-        
+
         deployer.undeploy(DEPLOYMENT_NAME);
     }
 
@@ -141,7 +141,7 @@ public class TckRecoveryTests {
      * enlisted with the LRA fails and the LRA is ended during the time
      * the service is still down, the Compensate callbacks are received
      * when the microservice application is started again.
-     * 
+     *
      * Scenario:
      * - start a new container with a single LRA resource
      * - start a new LRA and enlist the LRA resource with it
@@ -158,16 +158,16 @@ public class TckRecoveryTests {
 
         // invoke phase 1 inside the container (start new LRA and enlist resource) which cancels after 500 millis
         Response response1 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_1)
-            .queryParam("timeout", true)
-            .request().get();
+                .path(RecoveryResource.PHASE_1)
+                .queryParam("timeout", true)
+                .request().get();
 
         Assert.assertEquals(200, response1.getStatus());
         URI lra = URI.create(response1.readEntity(String.class));
 
         // kill the test service while LRA is still active
         deployer.undeploy(DEPLOYMENT_NAME);
-        
+
         // Wait for the timeout cancellation of the LRA. This will put the LRA into cancel only state.
         // Then wait for the short delay to actually perform the cancellation while the service is still down.
         // Compensate should be attempted to be called while the participant service is down
@@ -176,7 +176,7 @@ public class TckRecoveryTests {
         } catch (InterruptedException e) {
             Assert.fail(e.getMessage());
         }
-        
+
         // wait for the Compensate call to be delivered
         try {
             lraRecoveryService.waitForCallbacks(lra);
@@ -186,18 +186,18 @@ public class TckRecoveryTests {
 
         // start the test service again
         deployer.deploy(DEPLOYMENT_NAME);
-        
+
         // trigger recovery causing the Compensate call to be replayed
         deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.TRIGGER_RECOVERY)
-            .request()
+                .path(RecoveryResource.TRIGGER_RECOVERY)
+                .request()
                 .header(RecoveryResource.LRA_HEADER, lra)
                 .get();
 
         // invoke phase 2 inside the container (execute checks that verify that callbacks have been called)
         Response response2 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_2)
-            .request()
+                .path(RecoveryResource.PHASE_2)
+                .request()
                 .header(RecoveryResource.LRA_HEADER, lra)
                 .get();
 

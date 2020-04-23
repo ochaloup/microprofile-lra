@@ -43,7 +43,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
 import javax.ws.rs.client.Entity;
-import org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
@@ -193,7 +193,7 @@ public class TckParticipantTests extends TckTestBase {
         Future<Response> lraFuture = es.submit(() -> tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
                 .path(ValidLRACSParticipant.ENLIST_WITH_LONG_LATENCY)
                 .request()
-                .header(RecoveryResource.LRA_HEADER, lraId)
+                .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId)
                 .put(Entity.text("")));
         
         //lraOps.cancelLRA(lraId);

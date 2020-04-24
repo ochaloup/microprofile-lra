@@ -191,15 +191,21 @@ public class TckParticipantTests extends TckTestBase {
         LOGGER.info(String.format("Started LRA with URI %s", lraId));
         // start business method asynchronously and return immediately
         Future<Response> lraFuture = es.submit(() -> tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
-                .path(ValidLRACSParticipant.ENLIST_WITH_LONG_LATENCY)
+                .path(ValidLRACSParticipant.ENLIST_WITH_LONG_LATENCY_START)
                 .request()
                 .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId)
                 .put(Entity.text("")));
         
-        //lraOps.cancelLRA(lraId);
-        
-        Assert.assertFalse(lraFuture.isCancelled());
+        // shut down LRA
+        lraOps.cancelLRA(lraId);
+        // business method should hang now, let's check that
         Assert.assertFalse(lraFuture.isDone());
+        // release the latch in the ValidLRACSParticipant resource and finish business method
+        Response exitBusinessResponse = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
+                .path(ValidLRACSParticipant.ENLIST_WITH_LONG_LATENCY_END)
+                .request()
+                .get();
+        Assert.assertEquals(200, exitBusinessResponse.getStatus());
         try {
             Response response = lraFuture.get();
             int noCompensated = response.readEntity(Integer.class);

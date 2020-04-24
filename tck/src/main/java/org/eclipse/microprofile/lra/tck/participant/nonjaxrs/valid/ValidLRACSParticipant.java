@@ -40,11 +40,11 @@ import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
-import org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource;
 import static org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource.LRA_TIMEOUT;
 
 /**
@@ -58,9 +58,11 @@ public class ValidLRACSParticipant {
     public static final String ROOT_PATH = "valid-cs-participant1";
     public static final String ENLIST_WITH_COMPLETE = "enlist-complete";
     public static final String ENLIST_WITH_COMPENSATE = "enlist-compensate";
-    public static final String ENLIST_WITH_LONG_LATENCY = "latency";
+    public static final String ENLIST_WITH_LONG_LATENCY_START = "latency-start";
+    public static final String ENLIST_WITH_LONG_LATENCY_END = "latency-end";
     private static final Logger LOGGER = Logger.getLogger(ValidLRACSParticipant.class.getName());
     
+    private CountDownLatch latch = new CountDownLatch(1);
     private int recoveryPasses;
 
     @Inject
@@ -124,18 +126,25 @@ public class ValidLRACSParticipant {
         return Response.ok(this.recoveryPasses).build();
     }
     
+    @GET
+    @Path(ENLIST_WITH_LONG_LATENCY_END)
+    public Response longLatencyFinish() {
+        latch.countDown();
+        return Response.ok().build();
+    }
+    
     @PUT
-    @Path(ENLIST_WITH_LONG_LATENCY)
+    @Path(ENLIST_WITH_LONG_LATENCY_START)
     @LRA(value = LRA.Type.MANDATORY, end = false, timeLimit = 10 * LRA_TIMEOUT, timeUnit = ChronoUnit.MILLIS)
     public Response enlistWithLongLatency(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         LOGGER.info("call of enlistWithLongLatency");
         try {
-            Thread.sleep(LRA_TIMEOUT * 8);
+            latch.await();
             return Response.ok(lraId)
-                    .entity(lraMetricService.getMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName()))
+                    .entity(lraMetricService.getMetric(LRAMetricType.Compensated, lraId, ValidLRACSParticipant.class.getName()))
                     .build();
         } catch (InterruptedException ex) {
-            return Response.ok().build();
+            return Response.ok(lraId).build();
         }
     }
 

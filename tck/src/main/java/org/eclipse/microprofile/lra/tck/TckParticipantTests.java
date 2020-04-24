@@ -187,7 +187,7 @@ public class TckParticipantTests extends TckTestBase {
     public void cancelLraDuringBusinessMethod() {
         ExecutorService es = Executors.newSingleThreadExecutor();
         LRAClientOps lraOps = lraTestService.getLRAClient();
-        URI lraId = lraOps.startLRA(null,"long_business_method", 0L, ChronoUnit.SECONDS);
+        URI lraId = lraOps.startLRA(null, lraClientId(), 0L, ChronoUnit.MILLIS);
         LOGGER.info(String.format("Started LRA with URI %s", lraId));
         // start business method asynchronously and return immediately
         Future<Response> lraFuture = es.submit(() -> tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
@@ -202,9 +202,9 @@ public class TckParticipantTests extends TckTestBase {
         Assert.assertFalse(lraFuture.isDone());
         try {
             Response response = lraFuture.get();
-            String rString = response.readEntity(String.class);
+            int noCompensated = response.readEntity(Integer.class);
             Assert.assertEquals(200, response.getStatus());
-            Assert.assertEquals(1, (int)Integer.getInteger(rString));
+            Assert.assertEquals(1, noCompensated);
         } catch (InterruptedException|ExecutionException e) {
             Assert.fail(e.getMessage());
         }

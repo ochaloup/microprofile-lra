@@ -132,7 +132,7 @@ public class ValidLRACSParticipant {
         try {
             Thread.sleep(LRA_TIMEOUT * 8);
             return Response.ok(lraId)
-                    .entity(String.valueOf(lraMetricService.getMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName())))
+                    .entity(lraMetricService.getMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName()))
                     .build();
         } catch (InterruptedException ex) {
             return Response.ok().build();

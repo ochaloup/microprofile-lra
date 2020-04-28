@@ -60,6 +60,7 @@ public class ValidLRACSParticipant {
     public static final String ENLIST_WITH_COMPENSATE = "enlist-compensate";
     public static final String ENLIST_WITH_LONG_LATENCY_START = "latency-start";
     public static final String ENLIST_WITH_LONG_LATENCY_END = "latency-end";
+    public static final String COMPENSATE_METRICS = "metrics";
     private static final Logger LOGGER = Logger.getLogger(ValidLRACSParticipant.class.getName());
     
     private CountDownLatch latch = new CountDownLatch(1);
@@ -140,12 +141,9 @@ public class ValidLRACSParticipant {
         LOGGER.info("call of enlistWithLongLatency");
         try {
             latch.await();
-            return Response.ok(lraId)
-                    .entity(lraMetricService.getMetric(LRAMetricType.Compensated, lraId, ValidLRACSParticipant.class.getName()))
-                    .build();
-        } catch (InterruptedException ex) {
             return Response.ok(lraId).build();
+        } catch (InterruptedException ex) {
+            return Response.serverError().build();
         }
     }
-
 }

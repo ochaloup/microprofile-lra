@@ -208,9 +208,9 @@ public class TckParticipantTests extends TckTestBase {
         Assert.assertEquals(200, exitBusinessResponse.getStatus());
         try {
             Response response = lraFuture.get();
-            int noCompensated = response.readEntity(Integer.class);
+            lraTestService.waitForEndPhaseReplay(lraId);
             Assert.assertEquals(200, response.getStatus());
-            Assert.assertEquals(1, noCompensated);
+            Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         } catch (InterruptedException|ExecutionException e) {
             Assert.fail(e.getMessage());
         }

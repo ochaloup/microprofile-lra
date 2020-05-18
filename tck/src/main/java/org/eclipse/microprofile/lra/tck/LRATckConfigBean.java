@@ -26,13 +26,13 @@ import javax.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
-public class LraTckConfigBean {
+public class LRATckConfigBean {
 
     /**
      * Definition of LRA default timeout which should be used
      * by any method which needs to work with timeout
      */
-    public static final Long LRA_TIMEOUT_MILLIS = 50000L;
+    private static final Long LRA_TIMEOUT_MILLIS = 50 * 1000L;
 
     /**
      * <p>
@@ -62,4 +62,11 @@ public class LraTckConfigBean {
         return timeoutFactor;
     }
 
+    public long adjustedDefaultTimeout() {
+        return adjustByFactor(LRA_TIMEOUT_MILLIS);
+    }
+
+    public long adjustByFactor(long value) {
+        return (long) Math.ceil(value * timeoutFactor());
+    }
 }

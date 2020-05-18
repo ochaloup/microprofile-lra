@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -67,6 +68,9 @@ public class TckRecoveryTests {
     
     @ArquillianResource
     private URL deploymentURL;
+
+    @Inject
+    private LRATckConfigBean config;
 
     private LRARecoveryService lraRecoveryService;
     
@@ -181,7 +185,7 @@ public class TckRecoveryTests {
         // Then wait for the short delay to actually perform the cancellation while the service is still down.
         // Compensate should be attempted to be called while the participant service is down
         try {
-            Thread.sleep(RecoveryResource.LRA_TIMEOUT);
+            Thread.sleep(config.adjustByFactor(RecoveryResource.LRA_TIMEOUT));
         } catch (InterruptedException e) {
             Assert.fail(e.getMessage());
         }

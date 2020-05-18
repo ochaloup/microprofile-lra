@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.LRATckConfigBean;
 import org.eclipse.microprofile.lra.tck.TckRecoveryTests;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
@@ -59,6 +60,9 @@ public class RecoveryResource {
 
     @Inject
     LRAMetricService lraMetricService;
+
+    @Inject
+    LRATckConfigBean config;
 
     @Inject
     LRATestService lraTestService;

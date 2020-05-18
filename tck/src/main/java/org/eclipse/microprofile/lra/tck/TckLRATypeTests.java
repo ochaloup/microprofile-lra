@@ -30,6 +30,7 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.Response;
 import java.net.URI;
@@ -70,6 +71,9 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Arquillian.class)
 public class TckLRATypeTests extends TckTestBase {
     private static final Logger LOGGER = Logger.getLogger(TckLRATypeTests.class.getName());
+
+    @Inject
+    protected LRATckConfigBean config;
 
     @Deployment(name = "lra-type-tck-tests")
     public static WebArchive deploy() {
@@ -572,7 +576,7 @@ public class TckLRATypeTests extends TckTestBase {
                                  boolean methodLRAShouldBeActive) {
         Invocation.Builder target = tckSuiteTarget.path(rootPath)
                 .path(path).request();
-        URI lra = startLRA ? lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS) : null;
+        URI lra = startLRA ? lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS) : null;
 
         if (lra != null) {
             target = target.header(LRA.LRA_HTTP_CONTEXT_HEADER, lra);

@@ -20,7 +20,7 @@
 package org.eclipse.microprofile.lra.tck.service;
 
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
-import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
+import org.eclipse.microprofile.lra.tck.LRATckConfigBean;
 import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
 import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
 import org.junit.Assert;
@@ -39,7 +39,7 @@ import java.util.ServiceLoader;
 public class LRATestService {
 
     @Inject
-    LraTckConfigBean config;
+    LRATckConfigBean config;
 
     private LRAClientOps lraClient;
 

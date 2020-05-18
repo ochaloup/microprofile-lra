@@ -48,9 +48,6 @@ public class TckTestBase {
     @Rule public TestName testName = new TestName();
 
     @Inject
-    private LraTckConfigBean config;
-    
-    @Inject
     private LRATestService lraTestService;
 
     @Inject
@@ -113,16 +110,5 @@ public class TckTestBase {
      */
     String lraClientId() {
         return this.getClass().getSimpleName() + "#" + testName.getMethodName();
-    }
-
-    /**
-     * Adjusting the default timeout by the specified timeout factor
-     * which can be defined by user.
-     */
-    long lraTimeout() {
-        if(LraTckConfigBean.LRA_TIMEOUT_MILLIS < 0){
-            throw new IllegalArgumentException("value of timeout can't be negative");
-        }
-        return (long) Math.ceil(LraTckConfigBean.LRA_TIMEOUT_MILLIS * config.timeoutFactor());
     }
 }

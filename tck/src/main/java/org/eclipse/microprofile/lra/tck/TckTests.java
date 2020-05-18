@@ -75,6 +75,9 @@ public class TckTests extends TckTestBase {
     private LRAMetricService lraMetricService;
 
     @Inject
+    protected LRATckConfigBean config;
+
+    @Inject
     private LRATestService lraTestService;
     
     private enum CompletionType {
@@ -100,7 +103,7 @@ public class TckTests extends TckTestBase {
     @Test
     public void cancelLRA() throws WebApplicationException {
         try {
-            URI lra = lraClient.startLRA(null,lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+            URI lra = lraClient.startLRA(null,lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
 
             lraClient.cancelLRA(lra);
 
@@ -120,7 +123,7 @@ public class TckTests extends TckTestBase {
      */
     @Test
     public void closeLRA() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
 
         lraClient.closeLRA(lra);
 
@@ -130,7 +133,7 @@ public class TckTests extends TckTestBase {
 
     @Test
     public void nestedActivity() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget
                 .path(LRA_RESOURCE_PATH).path("nestedActivity");
 
@@ -185,7 +188,7 @@ public class TckTests extends TckTestBase {
 
     @Test
     public void joinLRAViaHeader() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
 
         WebTarget resourcePath = tckSuiteTarget.path(LRA_RESOURCE_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath
@@ -213,7 +216,7 @@ public class TckTests extends TckTestBase {
 
     @Test
     public void join() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(LRA_RESOURCE_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath
                 .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
@@ -229,7 +232,7 @@ public class TckTests extends TckTestBase {
      */
     @Test
     public void testAfterLRAParticipant() throws WebApplicationException, InterruptedException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(AFTER_LRA_PARTICIPANT_PATH).path(AFTER_LRA_PARTICIPANT_WORK);
         Response response = resourcePath
                 .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
@@ -252,7 +255,7 @@ public class TckTests extends TckTestBase {
      */
     @Test
     public void testAfterLRAListener() {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(AFTER_LRA_LISTENER_PATH).path(AFTER_LRA_LISTENER_WORK);
         Response response = resourcePath
                 .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
@@ -271,7 +274,7 @@ public class TckTests extends TckTestBase {
 
     @Test
     public void leaveLRA() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(LRA_RESOURCE_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
 
@@ -386,7 +389,7 @@ public class TckTests extends TckTestBase {
 
     private void joinAndEnd(boolean close, String path, String path2)
             throws WebApplicationException, InterruptedException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(path).path(path2);
 
         Response response = resourcePath
@@ -426,7 +429,7 @@ public class TckTests extends TckTestBase {
                 .path(NoLRAResource.NO_LRA_RESOURCE_PATH)
                 .path(NoLRAResource.NON_TRANSACTIONAL_WORK_PATH);
 
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
 
         Response response = resourcePath.request().header(LRA_HTTP_CONTEXT_HEADER, lra)
                 .put(Entity.text(""));
@@ -522,7 +525,7 @@ public class TckTests extends TckTestBase {
         WebTarget resource1Path = tckSuiteTarget.path(TCK_PARTICIPANT_RESOURCE_PATH).path(resource1Method);
         WebTarget resource2Path = tckSuiteTarget.path(TCK_PARTICIPANT_RESOURCE_PATH).path(resource2Method);
 
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
 
         // invoke the same JAX-RS resources twice in the context of the lra which should enlist the resource only once:
         Response response1 = resource1Path.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
@@ -552,7 +555,7 @@ public class TckTests extends TckTestBase {
         WebTarget resource1Path = tckSuiteTarget.path(LRA_RESOURCE_PATH).path(TRANSACTIONAL_WORK_PATH);
         WebTarget resource2Path = tckSuiteTarget.path(TCK_PARTICIPANT_RESOURCE_PATH).path(JOIN_WITH_EXISTING_LRA_PATH);
 
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
 
         // invoke two JAX-RS resources in the context of the lra which should enlist them both:
         Response response1 = resource1Path.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
@@ -584,7 +587,7 @@ public class TckTests extends TckTestBase {
             how = CompletionType.complete;
         }
 
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        URI lra = lraClient.startLRA(null, lraClientId(), config.adjustedDefaultTimeout(), ChronoUnit.MILLIS);
         String lraId = lra.toString();
 
         Response response = resourcePath

@@ -69,9 +69,6 @@ public class TckRecoveryTests {
     @ArquillianResource
     private URL deploymentURL;
 
-    @Inject
-    private LRATckConfigBean config;
-
     private LRARecoveryService lraRecoveryService;
     
     private Client deploymentClient;
@@ -182,10 +179,9 @@ public class TckRecoveryTests {
         deployer.undeploy(DEPLOYMENT_NAME);
         
         // Wait for the timeout cancellation of the LRA. This will put the LRA into cancel only state.
-        // Then wait for the short delay to actually perform the cancellation while the service is still down.
         // Compensate should be attempted to be called while the participant service is down
         try {
-            Thread.sleep(config.adjustByFactor(RecoveryResource.LRA_TIMEOUT));
+            Thread.sleep(2*RecoveryResource.LRA_TIMEOUT);
         } catch (InterruptedException e) {
             Assert.fail(e.getMessage());
         }

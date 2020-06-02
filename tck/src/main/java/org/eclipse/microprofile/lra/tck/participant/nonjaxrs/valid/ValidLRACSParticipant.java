@@ -37,7 +37,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
@@ -45,7 +44,6 @@ import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
-import static org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource.LRA_TIMEOUT;
 
 /**
  * Valid participant resource containing async non-JAX-RS participant methods with 
@@ -86,14 +84,16 @@ public class ValidLRACSParticipant {
     @Compensate
     public CompletionStage<Void> compensate(URI lraId) {
         assert lraId != null;
-        
+        if(latch.getCount() > 0) {
+            latch.countDown();
+        }
         return CompletableFuture.runAsync(() -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId));
     }
 
     @Complete
     public CompletionStage<Response> complete(URI lraId) {
         assert lraId != null;
-        
+
         return CompletableFuture.supplyAsync(() -> {
             lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
             
@@ -126,17 +126,10 @@ public class ValidLRACSParticipant {
     public Response getAcceptLRA() {
         return Response.ok(this.recoveryPasses).build();
     }
-    
-    @GET
-    @Path(ENLIST_WITH_LONG_LATENCY_END)
-    public Response longLatencyFinish() {
-        latch.countDown();
-        return Response.ok().build();
-    }
-    
+
     @PUT
     @Path(ENLIST_WITH_LONG_LATENCY_START)
-    @LRA(value = LRA.Type.MANDATORY, end = false, timeLimit = 10 * LRA_TIMEOUT, timeUnit = ChronoUnit.MILLIS)
+    @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response enlistWithLongLatency(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         LOGGER.info("call of enlistWithLongLatency");
         try {

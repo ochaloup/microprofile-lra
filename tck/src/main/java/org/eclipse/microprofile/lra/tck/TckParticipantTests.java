@@ -182,7 +182,7 @@ public class TckParticipantTests extends TckTestBase {
         
         lraTestService.waitForRecovery(lraId);
     }
-    
+
     @Test
     public void cancelLraDuringBusinessMethod() {
         ExecutorService es = Executors.newSingleThreadExecutor();
@@ -196,21 +196,22 @@ public class TckParticipantTests extends TckTestBase {
                 .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId)
                 .put(Entity.text("")));
         
+        // -1 indicates that the LRAMetricType.Compensated key is not present in the metrics Map.
+        // This in turn means that @Compensate could not have been called yet.
+        Assert.assertEquals(-1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
+        int retriesLeft = 1_000;
         // shut down LRA
-        lraOps.cancelLRA(lraId);
-        // business method should hang now, let's check that
-        Assert.assertFalse(lraFuture.isDone());
-        // release the latch in the ValidLRACSParticipant resource and finish business method
-        Response exitBusinessResponse = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
-                .path(ValidLRACSParticipant.ENLIST_WITH_LONG_LATENCY_END)
-                .request()
-                .get();
-        Assert.assertEquals(200, exitBusinessResponse.getStatus());
+        while(!lraOps.isLRAFinished(lraId) && --retriesLeft > 0) {
+            LOGGER.info(String.format("cancelLRA(%s)", lraId));
+            lraOps.cancelLRA(lraId);
+        }
+        Assert.assertTrue(lraOps.isLRAFinished(lraId));
+        Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated));
+        LOGGER.info(String.format("Finished business method %s", lraId));
         try {
             Response response = lraFuture.get();
             lraTestService.waitForEndPhaseReplay(lraId);
             Assert.assertEquals(200, response.getStatus());
-            Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         } catch (InterruptedException|ExecutionException e) {
             Assert.fail(e.getMessage());
         }

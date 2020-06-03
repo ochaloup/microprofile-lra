@@ -61,7 +61,8 @@ public class ValidLRACSParticipant {
     public static final String COMPENSATE_METRICS = "metrics";
     private static final Logger LOGGER = Logger.getLogger(ValidLRACSParticipant.class.getName());
     
-    private CountDownLatch latch = new CountDownLatch(1);
+    private CountDownLatch longLatencyLatch = new CountDownLatch(1);
+    private CountDownLatch syncMethodWasInvokedLatch = new CountDownLatch(1);
     private int recoveryPasses;
 
     @Inject
@@ -84,8 +85,8 @@ public class ValidLRACSParticipant {
     @Compensate
     public CompletionStage<Void> compensate(URI lraId) {
         assert lraId != null;
-        if(latch.getCount() > 0) {
-            latch.countDown();
+        if(longLatencyLatch.getCount() > 0) {
+            longLatencyLatch.countDown();
         }
         return CompletableFuture.runAsync(() -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId));
     }
@@ -133,10 +134,23 @@ public class ValidLRACSParticipant {
     public Response enlistWithLongLatency(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         LOGGER.info("call of enlistWithLongLatency");
         try {
-            latch.await();
+            syncMethodWasInvokedLatch.countDown();
+            longLatencyLatch.await();
             return Response.ok(lraId).build();
         } catch (InterruptedException ex) {
             return Response.serverError().build();
         }
+    }
+
+    @PUT
+    @Path("already-in")
+    public Response waitForArleadyIn() {
+        LOGGER.info("call of waitForArleadyIn");
+        try {
+            syncMethodWasInvokedLatch.await();
+        } catch (Exception e) {
+            throw new IllegalStateException("Exepcting the latch will be succesfully released on long latency LRA is in progress");
+        }
+        return Response.ok().build();
     }
 }

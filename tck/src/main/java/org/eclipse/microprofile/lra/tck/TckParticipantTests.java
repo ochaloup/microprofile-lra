@@ -37,7 +37,6 @@ import javax.ws.rs.core.Response;
 
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -184,7 +183,7 @@ public class TckParticipantTests extends TckTestBase {
     }
 
     @Test
-    public void cancelLraDuringBusinessMethod() {
+    public void cancelLraDuringBusinessMethod() throws Exception {
         ExecutorService es = Executors.newSingleThreadExecutor();
         LRAClientOps lraOps = lraTestService.getLRAClient();
         URI lraId = lraOps.startLRA(null, lraClientId(), 0L, ChronoUnit.MILLIS);
@@ -195,25 +194,26 @@ public class TckParticipantTests extends TckTestBase {
                 .request()
                 .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId)
                 .put(Entity.text("")));
+
+        tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH).path("already-in")
+                .request().put(Entity.text(""));
         
         // -1 indicates that the LRAMetricType.Compensated key is not present in the metrics Map.
         // This in turn means that @Compensate could not have been called yet.
         Assert.assertEquals(-1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
+        // let's cancel LRA
+        LOGGER.info(String.format("cancelLRA(%s)", lraId));
+        lraOps.cancelLRA(lraId);
+
         int retriesLeft = 1_000;
-        // shut down LRA
         while(!lraOps.isLRAFinished(lraId) && --retriesLeft > 0) {
-            LOGGER.info(String.format("cancelLRA(%s)", lraId));
-            lraOps.cancelLRA(lraId);
+            Thread.sleep(20);
         }
         Assert.assertTrue(lraOps.isLRAFinished(lraId));
         Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated));
         LOGGER.info(String.format("Finished business method %s", lraId));
-        try {
-            Response response = lraFuture.get();
-            lraTestService.waitForEndPhaseReplay(lraId);
-            Assert.assertEquals(200, response.getStatus());
-        } catch (InterruptedException|ExecutionException e) {
-            Assert.fail(e.getMessage());
-        }
+
+        Response response = lraFuture.get();
+        Assert.assertEquals(200, response.getStatus());
     }
 }

@@ -277,7 +277,7 @@
                 </executions>
                 <configuration>
                     <excludes>
-                        <exclude>bnd.bnd</exclude>
+                        <exclude>**/bnd.bnd</exclude>
                         <exclude>*.adoc</exclude>
                         <exclude>*.log</exclude>
                         <exclude>.checkstyle</exclude>

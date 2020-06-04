@@ -208,8 +208,8 @@ public class TckParticipantTests extends TckTestBase {
         Assert.assertEquals(-1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         LOGGER.info(String.format("Cancelled LRA with URI %s", lraId));
         lraOps.cancelLRA(lraId);
-        Assert.assertTrue(lraOps.isLRAFinished(lraId));
-        Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated));
+        Assert.assertTrue(lraOps.isLRAFinished(lraId, lraMetricService, LongBusinessMethodParticipant.class.getName()));
+        Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
 
         Response response = lraFuture.get();
         Assert.assertEquals(200, response.getStatus());

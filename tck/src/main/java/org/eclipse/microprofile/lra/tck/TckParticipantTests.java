@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.LongBusinessMethodParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRACSParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
@@ -184,36 +185,33 @@ public class TckParticipantTests extends TckTestBase {
     }
 
     @Test
-    public void cancelLraDuringBusinessMethod() {
+    public void cancelLraDuringBusinessMethod() throws InterruptedException, ExecutionException {
         ExecutorService es = Executors.newSingleThreadExecutor();
         LRAClientOps lraOps = lraTestService.getLRAClient();
         URI lraId = lraOps.startLRA(null, lraClientId(), 0L, ChronoUnit.MILLIS);
         LOGGER.info(String.format("Started LRA with URI %s", lraId));
-        // start business method asynchronously and return immediately
-        Future<Response> lraFuture = es.submit(() -> tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
-                .path(ValidLRACSParticipant.ENLIST_WITH_LONG_LATENCY_START)
+        // Start business method asynchronously, i.e. return immediately.
+        Future<Response> lraFuture = es.submit(() -> tckSuiteTarget.path(LongBusinessMethodParticipant.ROOT_PATH)
+                .path(LongBusinessMethodParticipant.BUSINESS_METHOD)
                 .request()
                 .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId)
                 .put(Entity.text("")));
         
-        // -1 indicates that the LRAMetricType.Compensated key is not present in the metrics Map.
+        // Make sure that when we cancel the LRA, the participant is waiting in the business method.
+        Response syncMethodResponse = tckSuiteTarget.path(LongBusinessMethodParticipant.ROOT_PATH)
+                      .path(LongBusinessMethodParticipant.SYNC_METHOD)
+                      .request()
+                      .put(Entity.text(""));
+        Assert.assertEquals(200, syncMethodResponse.getStatus());
+        // -1 indicates that the LRAMetricType.Compensated key is not yet present in the metrics Map.
         // This in turn means that @Compensate could not have been called yet.
         Assert.assertEquals(-1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
-        int retriesLeft = 1_000;
-        // shut down LRA
-        while(!lraOps.isLRAFinished(lraId) && --retriesLeft > 0) {
-            LOGGER.info(String.format("cancelLRA(%s)", lraId));
-            lraOps.cancelLRA(lraId);
-        }
+        LOGGER.info(String.format("Cancelled LRA with URI %s", lraId));
+        lraOps.cancelLRA(lraId);
         Assert.assertTrue(lraOps.isLRAFinished(lraId));
         Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated));
-        LOGGER.info(String.format("Finished business method %s", lraId));
-        try {
-            Response response = lraFuture.get();
-            lraTestService.waitForEndPhaseReplay(lraId);
-            Assert.assertEquals(200, response.getStatus());
-        } catch (InterruptedException|ExecutionException e) {
-            Assert.fail(e.getMessage());
-        }
+
+        Response response = lraFuture.get();
+        Assert.assertEquals(200, response.getStatus());
     }
 }

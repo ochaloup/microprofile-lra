@@ -39,8 +39,6 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CountDownLatch;
-import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
@@ -56,12 +54,8 @@ public class ValidLRACSParticipant {
     public static final String ROOT_PATH = "valid-cs-participant1";
     public static final String ENLIST_WITH_COMPLETE = "enlist-complete";
     public static final String ENLIST_WITH_COMPENSATE = "enlist-compensate";
-    public static final String ENLIST_WITH_LONG_LATENCY_START = "latency-start";
-    public static final String ENLIST_WITH_LONG_LATENCY_END = "latency-end";
     public static final String COMPENSATE_METRICS = "metrics";
-    private static final Logger LOGGER = Logger.getLogger(ValidLRACSParticipant.class.getName());
     
-    private CountDownLatch latch = new CountDownLatch(1);
     private int recoveryPasses;
 
     @Inject
@@ -84,9 +78,7 @@ public class ValidLRACSParticipant {
     @Compensate
     public CompletionStage<Void> compensate(URI lraId) {
         assert lraId != null;
-        if(latch.getCount() > 0) {
-            latch.countDown();
-        }
+
         return CompletableFuture.runAsync(() -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId));
     }
 
@@ -125,18 +117,5 @@ public class ValidLRACSParticipant {
     @Path(ACCEPT_PATH)
     public Response getAcceptLRA() {
         return Response.ok(this.recoveryPasses).build();
-    }
-
-    @PUT
-    @Path(ENLIST_WITH_LONG_LATENCY_START)
-    @LRA(value = LRA.Type.MANDATORY, end = false)
-    public Response enlistWithLongLatency(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        LOGGER.info("call of enlistWithLongLatency");
-        try {
-            latch.await();
-            return Response.ok(lraId).build();
-        } catch (InterruptedException ex) {
-            return Response.serverError().build();
-        }
     }
 }

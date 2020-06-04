@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class LRAMetricService {
 
-    private static final String ALL = "all-participants";
+    public static final String ALL = "all-participants";
     
     // maintain metrics on a per LRA basis
     private Map<URI, Map<String, LRAMetric>> metrics = new HashMap<>();

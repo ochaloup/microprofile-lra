@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRACSParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
@@ -27,23 +28,21 @@ import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
-import javax.ws.rs.client.Entity;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -206,11 +205,11 @@ public class TckParticipantTests extends TckTestBase {
         lraOps.cancelLRA(lraId);
 
         int retriesLeft = 1_000;
-        while(!lraOps.isLRAFinished(lraId) && --retriesLeft > 0) {
+        while(!lraOps.isLRAFinished(lraId, lraMetricService, LRAMetricService.ALL) && --retriesLeft > 0) {
             Thread.sleep(20);
         }
-        Assert.assertTrue(lraOps.isLRAFinished(lraId));
-        Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated));
+        Assert.assertTrue(lraOps.isLRAFinished(lraId, lraMetricService, LRAMetricService.ALL));
+        Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         LOGGER.info(String.format("Finished business method %s", lraId));
 
         Response response = lraFuture.get();

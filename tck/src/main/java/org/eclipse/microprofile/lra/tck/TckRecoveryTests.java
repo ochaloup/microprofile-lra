@@ -25,6 +25,7 @@ import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
 import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -36,6 +37,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import javax.annotation.security.RunAs;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -47,14 +49,17 @@ import java.util.logging.Logger;
 
 /**
  * Tests for the recovery of failed LRA services. Test that LRA functions properly even in case of service failures.
- * 
- * As this test is not running a managed Arquillian deployment, CDI is not working inside of this class. This is
- * why the test execution is moved into {@link RecoveryResource} in two phases (see {@link RecoveryResource#PHASE_1} and
+ *
+ * This test is meant to be run in "run as client mode controlling the behaviour not via CDI injection but via HTTP calls.
+ * The @{@link Deployment} is defined as <code>managed = false</code> and <code><testable = fasle</code>.
+ * That means that Arquillian does not automatically deploy the deployment at the start of the test
+ * and the test is not placed within the deployment for the in-container testing.
+ *
+ * The test execution is moved into {@link RecoveryResource} in two phases (see {@link RecoveryResource#PHASE_1} and
  * {@link RecoveryResource#PHASE_2}) which also verify the results and pass the results in HTTP response.
- * 
- * Note that this test relies on Arquillian to supply the deployment URL via the {@link ArquillianResource} injection.
  */
 @RunWith(Arquillian.class)
+@RunAsClient
 public class TckRecoveryTests {
     
     public static final String LRA_TCK_DEPLOYMENT_URL = "LRA-TCK-Deployment-URL";
@@ -90,7 +95,7 @@ public class TckRecoveryTests {
         deploymentClient.close();
     }
 
-    @Deployment(name = DEPLOYMENT_NAME, managed = false)
+    @Deployment(name = DEPLOYMENT_NAME, managed = false, testable = false)
     public static WebArchive deploy() {
         return TckTestBase.deploy(DEPLOYMENT_NAME);
     }

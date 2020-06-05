@@ -86,11 +86,6 @@ public class TckTests extends TckTestBase {
         return TckTestBase.deploy(TckTests.class.getSimpleName().toLowerCase());
     }
 
-    @Before
-    public void before() {
-        super.before();
-    }
-
     /**
      * <p>
      * Starting LRA and cancelling it.

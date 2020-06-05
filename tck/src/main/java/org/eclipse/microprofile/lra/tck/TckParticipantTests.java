@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.LongBusinessMethodParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRACSParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant;
@@ -28,14 +29,15 @@ import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutionException;
@@ -43,9 +45,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
-import javax.ws.rs.client.Entity;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -196,7 +195,7 @@ public class TckParticipantTests extends TckTestBase {
                 .request()
                 .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId)
                 .put(Entity.text("")));
-        
+
         // Make sure that when we cancel the LRA, the participant is waiting in the business method.
         Response syncMethodResponse = tckSuiteTarget.path(LongBusinessMethodParticipant.ROOT_PATH)
                       .path(LongBusinessMethodParticipant.SYNC_METHOD)
@@ -205,13 +204,17 @@ public class TckParticipantTests extends TckTestBase {
         Assert.assertEquals(200, syncMethodResponse.getStatus());
         // -1 indicates that the LRAMetricType.Compensated key is not yet present in the metrics Map.
         // This in turn means that @Compensate could not have been called yet.
-        Assert.assertEquals(-1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
+        Assert.assertEquals(-1, lraMetricService.getMetric(
+                LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class.getName()));
         LOGGER.info(String.format("Cancelled LRA with URI %s", lraId));
         lraOps.cancelLRA(lraId);
-        Assert.assertTrue(lraOps.isLRAFinished(lraId, lraMetricService, LongBusinessMethodParticipant.class.getName()));
-        Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
+        // waiting for the LRA to be finished
+        lraTestService.waitForRecovery(lraId);
+        // participant has to be compensated
+        Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class.getName()));
 
         Response response = lraFuture.get();
-        Assert.assertEquals(200, response.getStatus());
+        Assert.assertEquals(LongBusinessMethodParticipant.class.getSimpleName() + "'s business method is expected " +
+                "to finish successfully despite the delay" , 200, response.getStatus());
     }
 }

@@ -154,7 +154,7 @@ public class RecoveryResource {
     @Path("/compensate")
     @Compensate
     public Response compensate(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class);
 
         return Response.ok().build();
     }

@@ -20,14 +20,11 @@
 package org.eclipse.microprofile.lra.tck.service;
 
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
-import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
 import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
 import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
 import org.junit.Assert;
-import sun.rmi.runtime.Log;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;

@@ -148,7 +148,7 @@ public class LraResource {
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                  @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
                                  String userData) {
-        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraResource.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraResource.class);
 
         assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Complete methods
         assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Complete methods
@@ -183,7 +183,7 @@ public class LraResource {
         assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Compensate methods
         assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Compensate methods
 
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraResource.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraResource.class);
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -210,7 +210,7 @@ public class LraResource {
     @Forget
     public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
-        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, LraResource.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, LraResource.class);
 
         assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Forget methods
         assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Forget methods

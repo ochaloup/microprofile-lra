@@ -186,7 +186,7 @@ public class TckRecoveryTests {
         // Then wait for the short delay to actually perform the cancellation while the service is still down.
         // Compensate should be attempted to be called while the participant service is down
         try {
-            Thread.sleep(RecoveryResource.LRA_TIMEOUT);
+            Thread.sleep(LraTckConfigBean.adjustTimeoutByDefaultFactor(RecoveryResource.LRA_TIMEOUT));
         } catch (InterruptedException e) {
             LOG.log(Level.SEVERE, "Sleep LRA timeout interrupted", e);
             Assert.fail("Sleeping LRA timeout " + RecoveryResource.LRA_TIMEOUT + " was interrupted: " + e.getMessage());

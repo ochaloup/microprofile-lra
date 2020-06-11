@@ -21,6 +21,7 @@
 package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -35,6 +36,45 @@ public class LraTckConfigBean {
     private static final Long LRA_TIMEOUT_MILLIS = 50000L;
 
     /**
+     * Name of the system property that is used as factor adjusting timeout values
+     * used in the testsuite.
+     */
+    private static final String LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME = "lra.tck.timeout.factor";
+
+    /**
+     * Name of the system property which is used to configure the TCK base url.
+     * See {@link LraTckConfigBean#tckSuiteBaseUrl}.
+     */
+    private static final String LRA_TCK_BASE_URL_PROPERTY_NAME = "lra.tck.base.url";
+
+    /**
+     * A helper method which is capable to adjust timeout value by the provided factor.
+     *
+     * @param timeout  timeout value which will be adjusted
+     * @param timeoutFactor  factor that will be used to adjusting the timeout (by multiplying it)
+     * @return  adjusted timeout by te provided factor
+     */
+    public static long adjustTimeout(long timeout, double timeoutFactor) {
+        if (timeout < 0 || timeoutFactor < 0)  {
+            throw new IllegalArgumentException(String.format(
+                    "Provided arguments (timeout=%d, timeoutFactor=%.2f) has to be positive", timeout, timeoutFactor));
+        }
+        return (long) Math.ceil(timeout * timeoutFactor);
+    }
+
+    /**
+     * A helper method which is capable to adjust timeout value
+     * by factor obtained from system property {@code #LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME}.
+     *
+     * @param timeout  timeout value which will be adjusted
+     * @return  adjusted timeout by te default factor
+     */
+    public static long adjustTimeoutByDefaultFactor(long timeout) {
+        String timeoutFactor = System.getProperty(LraTckConfigBean.LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME, "1.0");
+        return LraTckConfigBean.adjustTimeout(RecoveryResource.LRA_TIMEOUT, Double.parseDouble(timeoutFactor));
+    }
+
+    /**
      * <p>
      * Timeout factor which adjusts waiting time and timeouts for the TCK suite.
      * <p>
@@ -45,7 +85,7 @@ public class LraTckConfigBean {
      * If you wish the test waits shorter time than designed
      * or the timeout is elapsed faster then set the value less than <code>1.0</code>
      */
-    @Inject @ConfigProperty(name = "lra.tck.timeout.factor", defaultValue = "1.0")
+    @Inject @ConfigProperty(name = LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME, defaultValue = "1.0")
     private double timeoutFactor;
 
     /**
@@ -74,6 +114,6 @@ public class LraTckConfigBean {
      * @return value of adjusted timeout
      */
     public long adjustTimeout(long timeout) {
-        return (long) Math.ceil(timeout * timeoutFactor);
+        return LraTckConfigBean.adjustTimeout(timeout, timeoutFactor);
     }
 }

@@ -29,8 +29,6 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -51,8 +49,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import javax.enterprise.concurrent.ManagedExecutorService;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
@@ -97,7 +94,8 @@ public class ContextTckResource {
 
     private static final String REQUIRES_NEW_LRA_PATH = "/requires-new-lra";
 
-    private ExecutorService excecutorService;
+    @Inject
+    ManagedExecutorService excecutorService;
 
     @Inject
     private LRAMetricService lraMetricService;
@@ -128,22 +126,6 @@ public class ContextTckResource {
             endPhase = EndPhase.valueOf(faultType);
             endPhaseStatus = Response.Status.fromStatusCode(faultCode);
         }
-    }
-
-
-    @PostConstruct
-    private void postConstruct() {
-        excecutorService = Executors.newFixedThreadPool(1);
-
-    }
-
-    @PreDestroy
-    private void preDestroy() {
-        excecutorService.shutdown();
-    }
-
-    private ExecutorService getExcecutorService() {
-        return excecutorService;
     }
 
     // reset any state in preparation for the next test
@@ -263,7 +245,7 @@ public class ContextTckResource {
                         return Response.status(NOT_FOUND).entity(lraId.toASCIIString()).build();
                     }
                 },
-                getExcecutorService()
+                excecutorService
         );
     }
 
